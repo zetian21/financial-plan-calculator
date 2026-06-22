@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>保诚新人财务计划计算器</title>
+    <link rel="stylesheet" href="financial-plan.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Prudential 2026 新人财务计划</p>
+          <h1>财务计划收益与业绩压力计算器</h1>
+          <p class="intro">
+            选择计划和预支金额，快速查看最低业绩、可得收入、达不到时的后果，以及中等和最差情景。
+          </p>
+        </div>
+        <div class="hero-card">
+          <span>当前方案</span>
+          <strong id="heroPlan">U 每月财务预支 - HK$10,000</strong>
+          <small id="heroSaved">已自动保存选择</small>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel controls" aria-label="计划设置">
+          <label>
+            计划类型
+            <select id="planSelect"></select>
+          </label>
+
+          <label>
+            预支金额 / 档位
+            <select id="tierSelect"></select>
+          </label>
+
+          <label>
+            估算业务成本
+            <div class="range-row">
+              <input id="costRate" type="range" min="0" max="35" step="1" />
+              <output id="costRateText">15%</output>
+            </div>
+          </label>
+
+          <label>
+            实际达成率
+            <div class="range-row">
+              <input id="actualRate" type="range" min="0" max="130" step="5" />
+              <output id="actualRateText">100%</output>
+            </div>
+          </label>
+
+          <div class="notice">
+            本页按PDF内资料和30%产品佣金假设估算。正式结果以保诚正式合约、实际佣金率、税务和个人成本为准。
+          </div>
+        </aside>
+
+        <section class="results">
+          <div class="metric-grid">
+            <article class="metric">
+              <span>最低核心业绩</span>
+              <strong id="targetMetric">HK$0</strong>
+              <small id="targetLabel">首24个月 NSC</small>
+            </article>
+            <article class="metric">
+              <span>财务计划金额</span>
+              <strong id="supportMetric">HK$0</strong>
+              <small>预支 + 花红</small>
+            </article>
+            <article class="metric">
+              <span>保守毛收入</span>
+              <strong id="grossMetric">HK$0</strong>
+              <small>含产品佣金估算</small>
+            </article>
+            <article class="metric">
+              <span>估算净收入</span>
+              <strong id="netMetric">HK$0</strong>
+              <small id="netLabel">扣除成本后</small>
+            </article>
+          </div>
+
+          <section class="panel summary">
+            <div class="section-title">
+              <h2>当前选择</h2>
+              <span id="planBadge">U10k</span>
+            </div>
+            <div id="planSummary" class="summary-grid"></div>
+          </section>
+
+          <section class="panel scenarios">
+            <div class="section-title">
+              <h2>三种结果</h2>
+              <span>按达成率估算</span>
+            </div>
+            <div id="scenarioList" class="scenario-list"></div>
+          </section>
+
+          <section class="panel detail">
+            <div class="section-title">
+              <h2>达不到时会怎样</h2>
+              <span id="riskLevel">风险提示</span>
+            </div>
+            <div id="riskText" class="risk-text"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="financial-plan.js"></script>
+  </body>
+</html>
