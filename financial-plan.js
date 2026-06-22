@@ -1,4 +1,4 @@
-const STORAGE_KEY = "prudential-financial-plan-calculator-v1";
+const STORAGE_KEY = "financial-plan-calculator-v1";
 const COMMISSION_RATE = 0.3;
 
 const plans = {
