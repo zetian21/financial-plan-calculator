@@ -98,7 +98,9 @@ const els = {
   targetMetric: document.querySelector("#targetMetric"),
   targetLabel: document.querySelector("#targetLabel"),
   supportMetric: document.querySelector("#supportMetric"),
+  supportLabel: document.querySelector("#supportLabel"),
   grossMetric: document.querySelector("#grossMetric"),
+  grossLabel: document.querySelector("#grossLabel"),
   netMetric: document.querySelector("#netMetric"),
   netLabel: document.querySelector("#netLabel"),
   planSummary: document.querySelector("#planSummary"),
@@ -161,6 +163,13 @@ function supportAmount(tier) {
 
 function targetAmount(tier) {
   return Math.max(tier.pbTarget || 0, tier.mfTarget || 0);
+}
+
+function periodLabel(planId) {
+  if (planId === "t") return "每年";
+  if (planId === "pfs") return "首36个月";
+  if (planId === "sof") return "首60个月";
+  return "首24个月";
 }
 
 function grossAtRate(tier, rate) {
@@ -290,7 +299,9 @@ function render() {
   els.targetMetric.textContent = money(target);
   els.targetLabel.textContent = plan.targetLabel;
   els.supportMetric.textContent = money(support);
+  els.supportLabel.textContent = `${periodLabel(state.planId)}预支 + 花红总额`;
   els.grossMetric.textContent = money(full.gross);
+  els.grossLabel.textContent = `${periodLabel(state.planId)}达标口径估算`;
   els.netMetric.textContent = money(net(projected.gross));
   els.netLabel.textContent = `按实际达成率${percent(state.actualRate)}、成本${percent(state.costRate)}`;
   els.costRate.value = state.costRate;
@@ -320,15 +331,15 @@ function renderRecommendations() {
         <button class="recommendation-card ${active ? "is-active" : ""}" type="button" data-plan="${item.planId}" data-tier="${item.tierId}">
           <span class="rec-stance">${item.stance}</span>
           <strong>${item.title}</strong>
-          <small>${plans[item.planId].name} - ${getTier(item.planId, item.tierId).label}</small>
-          <p>${item.reason}</p>
-          <dl>
-            <div><dt>最低业绩</dt><dd>${money(item.target)}</dd></div>
-            <div><dt>计划金额</dt><dd>${money(item.support)}</dd></div>
-            <div><dt>毛收入估算</dt><dd>${money(item.gross)}</dd></div>
-          </dl>
-        </button>
-      `;
+            <small>${plans[item.planId].name} - ${getTier(item.planId, item.tierId).label}</small>
+            <p>${item.reason}</p>
+            <dl>
+            <div><dt>${periodLabel(item.planId)}最低业绩</dt><dd>${money(item.target)}</dd></div>
+            <div><dt>${periodLabel(item.planId)}预支+花红总额</dt><dd>${money(item.support)}</dd></div>
+            <div><dt>${periodLabel(item.planId)}达标毛收入估算</dt><dd>${money(item.gross)}</dd></div>
+            </dl>
+          </button>
+        `;
     })
     .join("");
 }
@@ -336,14 +347,15 @@ function renderRecommendations() {
 function renderSummary(plan, tier, full) {
   const rows = [
     ["计划说明", plan.description],
+    ["口径说明", "预支+花红总额指该财务计划内可能发放的每月预支、一次性预支和业绩花红合计，不等于最终净利润。"],
     ["每月预支", tier.mf ? `${money(tier.mf)} x ${tier.mfMonths}个月` : "无每月预支"],
     ["一次性预支", tier.sof ? money(tier.sof) : "无"],
     ["预支业绩要求", tier.mfTarget ? money(tier.mfTarget) : "不适用"],
     ["花红金额", tier.pb ? money(tier.pb) : "无"],
     ["花红/最终业绩要求", money(targetAmount(tier))],
     ["产品佣金估算", `${money(full.commission)}，按NSC的30%估算`],
-    ["财务计划总额", money(supportAmount(tier))],
-    ["保守毛收入", money(full.gross)],
+    [`${periodLabel(state.planId)}预支+花红总额`, money(supportAmount(tier))],
+    [`${periodLabel(state.planId)}达标毛收入估算`, money(full.gross)],
   ];
 
   els.planSummary.innerHTML = rows
