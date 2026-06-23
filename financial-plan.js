@@ -1,4 +1,4 @@
-const STORAGE_KEY = "financial-plan-calculator-v1";
+const STORAGE_KEY = "financial-plan-calculator-v2";
 const COMMISSION_RATE = 0.3;
 
 const plans = {
@@ -16,7 +16,7 @@ const plans = {
     risk: [
       "当月业绩达标比例低于60%，当月每月预支发放为0。",
       "连续2个月没有签发新生意，每月预支会停止发放。",
-      "业绩花红需要首24个月达标，文件列明在第27个合约月份发放。",
+      "业绩花红需要首24个月达标，计划资料列明在第27个合约月份发放。",
       "如代理协议在指定期间内终止，U计划可能触发100%财务责任，正式金额以合约为准。",
     ],
   },
@@ -24,7 +24,7 @@ const plans = {
     name: "PFS 专业高才财务预支计划",
     badge: "PFS",
     targetLabel: "首36个月 NSC",
-    description: "适合高收入或硕士/专业人士，金额高，但业绩和留任压力也更高。",
+    description: "适合高收入、硕士或专业人士，金额高，但业绩和留任压力也更高。",
     tiers: [
       { id: "pfs-30000", label: "HK$30,000 / 月", mf: 30000, mfMonths: 24, mfTarget: 2520000, pb: 900000, pbTarget: 6480000 },
       { id: "pfs-40000", label: "HK$40,000 / 月", mf: 40000, mfMonths: 24, mfTarget: 3360000, pb: 1200000, pbTarget: 8640000 },
@@ -52,7 +52,7 @@ const plans = {
     ],
     risk: [
       "申请者一般需3年人寿保险销售经验、前公司服务年资、续保率和信贷报告等条件。",
-      "若24个月结束时每月预支达标率低于60%，公司会即时终止财务计划。",
+      "若24个月结束时每月预支达标率低于60%，公司可能终止财务计划。",
       "未达到最少维持合约年期，1-36个月内需偿还100%，37-48个月60%，49-72个月40%。",
       "PB1、PB2、PB3会在后续月份分期发放；发放前终止合约则不会发放。",
     ],
@@ -72,12 +72,17 @@ const plans = {
     risk: [
       "T计划没有月预支，前期收入主要取决于真实成交佣金。",
       "业绩花红会根据H&P、净保单数目和续保率等要求按比例发放。",
-      "文件显示T计划在一般终止情形下财务偿还压力较低，但正式条款仍以合约为准。",
+      "T计划一般没有每月预支偿还压力，但正式条款仍以合约为准。",
     ],
   },
 };
 
 const els = {
+  educationSelect: document.querySelector("#educationSelect"),
+  salarySelect: document.querySelector("#salarySelect"),
+  talentSelect: document.querySelector("#talentSelect"),
+  recommendationList: document.querySelector("#recommendationList"),
+  recommendationHint: document.querySelector("#recommendationHint"),
   planSelect: document.querySelector("#planSelect"),
   tierSelect: document.querySelector("#tierSelect"),
   costRate: document.querySelector("#costRate"),
@@ -100,6 +105,9 @@ const els = {
 };
 
 const defaultState = {
+  education: "bachelor",
+  expectedSalary: 10000,
+  highTalent: "no",
   planId: "u",
   tierId: "u-10000",
   costRate: 15,
@@ -172,6 +180,76 @@ function net(gross) {
   return gross * (1 - state.costRate / 100);
 }
 
+function getTier(planId, tierId) {
+  return plans[planId].tiers.find((tier) => tier.id === tierId);
+}
+
+function expectedSalaryTier(planId) {
+  const salary = Number(state.expectedSalary);
+  if (planId === "u") {
+    if (salary <= 10000) return "u-10000";
+    if (salary <= 15000) return "u-15000";
+    if (salary <= 20000) return "u-20000";
+    return "u-25000";
+  }
+  if (planId === "pfs") {
+    if (salary <= 30000) return "pfs-30000";
+    if (salary <= 40000) return "pfs-40000";
+    if (salary <= 50000) return "pfs-50000";
+    if (salary <= 60000) return "pfs-60000";
+    if (salary <= 70000) return "pfs-70000";
+    return "pfs-80000";
+  }
+  if (planId === "t") {
+    if (salary <= 15000) return "t-650";
+    if (salary <= 25000) return "t-1300";
+    if (salary <= 40000) return "t-1950";
+    if (salary <= 70000) return "t-5000";
+    return "t-10000";
+  }
+  if (salary <= 25000) return "sof-500k";
+  if (salary <= 50000) return "sof-1000k";
+  if (salary <= 70000) return "sof-1500k";
+  return "sof-2000k";
+}
+
+function buildRecommendations() {
+  const salary = Number(state.expectedSalary);
+  const advancedBackground = ["master", "professional"].includes(state.education) || state.highTalent === "yes";
+  const recommendations = [];
+
+  const add = (planId, tierId, title, reason, stance) => {
+    const tier = getTier(planId, tierId);
+    if (!tier) return;
+    recommendations.push({
+      planId,
+      tierId,
+      title,
+      reason,
+      stance,
+      target: targetAmount(tier),
+      support: supportAmount(tier),
+      gross: grossAtRate(tier, 100).gross,
+    });
+  };
+
+  add("u", expectedSalaryTier("u"), "稳健现金流方案", "适合以续签、稳定入账和较低还款压力为优先目标的人。", "推荐");
+
+  if (advancedBackground || salary >= 30000) {
+    add("pfs", expectedSalaryTier("pfs"), "高才进取方案", "学历、专业背景或高优才身份更匹配，但业绩要求和留任压力明显更高。", "进取");
+  } else {
+    add("u", salary <= 10000 ? "u-15000" : "u-10000", "轻度进阶方案", "在U计划内稍微提高或降低档位，用来对比现金流和业绩压力。", "备选");
+  }
+
+  add("t", expectedSalaryTier("t"), "低预支风险方案", "没有月预支，较少预支偿还风险，但前期现金流更依赖真实成交佣金。", "保守");
+
+  if (salary >= 50000 || state.highTalent === "yes") {
+    add("sof", expectedSalaryTier("sof"), "行业经验型方案", "仅适合已有保险销售经验和过往收入证明的人，不适合作为普通新人默认选择。", "条件型");
+  }
+
+  return recommendations.slice(0, 4);
+}
+
 function populatePlans() {
   els.planSelect.innerHTML = "";
   Object.entries(plans).forEach(([id, plan]) => {
@@ -199,6 +277,9 @@ function render() {
   const full = grossAtRate(tier, 100);
   const projected = grossAtRate(tier, state.actualRate);
 
+  els.educationSelect.value = state.education;
+  els.salarySelect.value = String(state.expectedSalary);
+  els.talentSelect.value = state.highTalent;
   els.heroPlan.textContent = `${plan.name} - ${tier.label}`;
   els.planBadge.textContent = `${plan.badge} ${tier.label}`;
   els.targetMetric.textContent = money(target);
@@ -212,9 +293,33 @@ function render() {
   els.costRateText.textContent = percent(state.costRate);
   els.actualRateText.textContent = percent(state.actualRate);
 
+  renderRecommendations();
   renderSummary(plan, tier, full);
   renderScenarios(tier);
   renderRisk(plan, tier);
+}
+
+function renderRecommendations() {
+  const recommendations = buildRecommendations();
+  els.recommendationHint.textContent = `${recommendations.length}个方案`;
+  els.recommendationList.innerHTML = recommendations
+    .map((item) => {
+      const active = item.planId === state.planId && item.tierId === state.tierId;
+      return `
+        <button class="recommendation-card ${active ? "is-active" : ""}" type="button" data-plan="${item.planId}" data-tier="${item.tierId}">
+          <span class="rec-stance">${item.stance}</span>
+          <strong>${item.title}</strong>
+          <small>${plans[item.planId].name} - ${getTier(item.planId, item.tierId).label}</small>
+          <p>${item.reason}</p>
+          <dl>
+            <div><dt>最低业绩</dt><dd>${money(item.target)}</dd></div>
+            <div><dt>计划金额</dt><dd>${money(item.support)}</dd></div>
+            <div><dt>毛收入估算</dt><dd>${money(item.gross)}</dd></div>
+          </dl>
+        </button>
+      `;
+    })
+    .join("");
 }
 
 function renderSummary(plan, tier, full) {
@@ -290,7 +395,40 @@ function renderRisk(plan, tier) {
   `;
 }
 
+function choosePlan(planId, tierId) {
+  state.planId = planId;
+  state.tierId = tierId;
+  populatePlans();
+  saveState();
+  render();
+  document.querySelector(".summary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function bindEvents() {
+  els.educationSelect.addEventListener("change", () => {
+    state.education = els.educationSelect.value;
+    saveState();
+    render();
+  });
+
+  els.salarySelect.addEventListener("change", () => {
+    state.expectedSalary = Number(els.salarySelect.value);
+    saveState();
+    render();
+  });
+
+  els.talentSelect.addEventListener("change", () => {
+    state.highTalent = els.talentSelect.value;
+    saveState();
+    render();
+  });
+
+  els.recommendationList.addEventListener("click", (event) => {
+    const card = event.target.closest(".recommendation-card");
+    if (!card) return;
+    choosePlan(card.dataset.plan, card.dataset.tier);
+  });
+
   els.planSelect.addEventListener("change", () => {
     state.planId = els.planSelect.value;
     state.tierId = currentPlan().tiers[0].id;
