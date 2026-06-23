@@ -131,6 +131,37 @@ label,
   gap: 14px;
 }
 
+.ai-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.generate-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  color: #fff;
+  background: var(--brand);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.generate-button:disabled {
+  cursor: wait;
+  opacity: 0.82;
+}
+
+.generate-status {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .panel {
   padding: 18px;
 }

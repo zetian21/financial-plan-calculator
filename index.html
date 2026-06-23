@@ -58,9 +58,13 @@
             </select>
           </label>
         </div>
+        <div class="ai-action">
+          <button id="generateButton" class="generate-button" type="button">AI生成方案</button>
+          <p id="generateStatus" class="generate-status">点击后根据个人条件生成推荐方案</p>
+        </div>
       </section>
 
-      <section class="panel recommendations" aria-label="推荐方案">
+      <section id="recommendationsPanel" class="panel recommendations" aria-label="推荐方案" hidden>
         <div class="section-title">
           <h2>推荐方案</h2>
           <span id="recommendationHint">按稳健优先排序</span>

@@ -81,6 +81,9 @@ const els = {
   educationSelect: document.querySelector("#educationSelect"),
   salarySelect: document.querySelector("#salarySelect"),
   talentSelect: document.querySelector("#talentSelect"),
+  generateButton: document.querySelector("#generateButton"),
+  generateStatus: document.querySelector("#generateStatus"),
+  recommendationsPanel: document.querySelector("#recommendationsPanel"),
   recommendationList: document.querySelector("#recommendationList"),
   recommendationHint: document.querySelector("#recommendationHint"),
   planSelect: document.querySelector("#planSelect"),
@@ -108,6 +111,7 @@ const defaultState = {
   education: "bachelor",
   expectedSalary: 10000,
   highTalent: "no",
+  recommendationsVisible: false,
   planId: "u",
   tierId: "u-10000",
   costRate: 15,
@@ -115,6 +119,7 @@ const defaultState = {
 };
 
 let state = loadState();
+let generateTimer = null;
 
 function loadState() {
   try {
@@ -292,6 +297,12 @@ function render() {
   els.actualRate.value = state.actualRate;
   els.costRateText.textContent = percent(state.costRate);
   els.actualRateText.textContent = percent(state.actualRate);
+  els.recommendationsPanel.hidden = !state.recommendationsVisible;
+  els.generateButton.disabled = false;
+  els.generateButton.textContent = state.recommendationsVisible ? "重新AI生成方案" : "AI生成方案";
+  els.generateStatus.textContent = state.recommendationsVisible
+    ? "已根据当前个人条件生成推荐方案"
+    : "点击后根据个人条件生成推荐方案";
 
   renderRecommendations();
   renderSummary(plan, tier, full);
@@ -404,21 +415,58 @@ function choosePlan(planId, tierId) {
   document.querySelector(".summary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function hideGeneratedRecommendations() {
+  if (!state.recommendationsVisible) return;
+  state.recommendationsVisible = false;
+  saveState();
+}
+
+function startGenerateRecommendations() {
+  if (generateTimer) {
+    window.clearInterval(generateTimer);
+  }
+
+  let count = 3;
+  els.generateButton.disabled = true;
+  els.generateButton.textContent = `正在AI生成 ${count}`;
+  els.generateStatus.textContent = "正在分析学历、期望薪资和身份条件";
+
+  generateTimer = window.setInterval(() => {
+    count -= 1;
+    if (count > 0) {
+      els.generateButton.textContent = `正在AI生成 ${count}`;
+      return;
+    }
+
+    window.clearInterval(generateTimer);
+    generateTimer = null;
+    state.recommendationsVisible = true;
+    saveState();
+    render();
+    els.recommendationsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 700);
+}
+
 function bindEvents() {
+  els.generateButton.addEventListener("click", startGenerateRecommendations);
+
   els.educationSelect.addEventListener("change", () => {
     state.education = els.educationSelect.value;
+    hideGeneratedRecommendations();
     saveState();
     render();
   });
 
   els.salarySelect.addEventListener("change", () => {
     state.expectedSalary = Number(els.salarySelect.value);
+    hideGeneratedRecommendations();
     saveState();
     render();
   });
 
   els.talentSelect.addEventListener("change", () => {
     state.highTalent = els.talentSelect.value;
+    hideGeneratedRecommendations();
     saveState();
     render();
   });
